@@ -319,7 +319,7 @@
             formData.append('startDate', document.getElementById('startDate').value);
             formData.append('endDate', document.getElementById('endDate').value);
 
-            const response = await fetch('http://localhost:3000/api/calculate-profit', {
+            const response = await fetch('/api/calculate-profit', {
                 method: 'POST',
                 body: formData
             });
