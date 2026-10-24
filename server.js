@@ -202,7 +202,13 @@ app.post('/api/calculate-profit', upload.fields([
     }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`✅ Serveur API en ligne sur http://localhost:${PORT}`);
-});
+// On garde le listen pour vos tests en local (quand on tape 'node server.js')
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = 3000;
+    app.listen(PORT, () => {
+        console.log(`✅ Serveur API en ligne sur http://localhost:${PORT}`);
+    });
+}
+
+// Ligne CRITIQUE pour que Vercel puisse exécuter l'API en ligne
+module.exports = app;
