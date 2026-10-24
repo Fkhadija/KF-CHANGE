@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>KF Change - Statistiques Bénéfice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            main { width: 100% !important; margin: 0 !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-200 h-screen flex overflow-hidden font-sans select-none">
+
+    <!-- BARRE LATÉRALE GAUCHE (Style MAG Change) -->
+    <aside class="w-56 bg-[#1b3a57] text-white flex flex-col justify-between shadow-xl no-print">
+        <div>
+            <!-- Logo -->
+            <div class="p-5 border-b border-slate-600 flex items-center space-x-2">
+                <div class="w-10 h-10 rounded-full border-2 border-orange-500 flex items-center justify-center font-black text-orange-500 text-lg">
+                    KF
+                </div>
+                <div>
+                    <span class="text-xl font-black tracking-wider text-red-500">KF</span>
+                    <span class="block text-xs text-gray-300 -mt-1">=||= Change</span>
+                </div>
+            </div>
+
+            <!-- Menu de navigation -->
+            <nav class="mt-4 space-y-1 text-sm">
+                <a href="#" onclick="openImportModal()" class="flex items-center px-4 py-3 hover:bg-[#254d73] transition">
+                    <span class="mr-3">🏠</span> Accueil / Import Fichiers
+                </a>
+                <a href="#" onclick="switchTab('journal', 'ACHAT')" class="flex items-center px-4 py-3 hover:bg-[#254d73] transition">
+                    <span class="mr-3">📥</span> Achat Clients
+                </a>
+                <a href="#" onclick="switchTab('journal', 'VENTE')" class="flex items-center px-4 py-3 hover:bg-[#254d73] transition">
+                    <span class="mr-3">📤</span> Vente Clients
+                </a>
+                <a href="#" onclick="switchTab('journal', 'CESSION')" class="flex items-center px-4 py-3 hover:bg-[#254d73] transition">
+                    <span class="mr-3">🏦</span> Gestion Banque
+                </a>
+                <a href="#" onclick="switchTab('comptable')" class="flex items-center px-4 py-3 hover:bg-[#254d73] transition">
+                    <span class="mr-3">📠</span> Gestion de caisse
+                </a>
+                <a href="#" onclick="switchTab('comptable')" class="flex items-center px-4 py-3 hover:bg-[#254d73] transition">
+                    <span class="mr-3">💱</span> Gestion de devise
+                </a>
+                <a href="#" onclick="window.print()" class="flex items-center px-4 py-3 hover:bg-[#254d73] transition">
+                    <span class="mr-3">📄</span> Rapports
+                </a>
+                <!-- Menu Actif en clair comme sur la photo -->
+                <a href="#" onclick="switchTab('mensuel')" class="flex items-center px-4 py-3 bg-[#e2e8f0] text-[#1b3a57] font-bold border-l-4 border-orange-500">
+                    <span class="mr-3">📊</span> Statistique bénéfice
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-slate-600 text-xs text-gray-300 flex items-center justify-between">
+            <span>⚙️ Paramètres</span>
+            <span>v2.0</span>
+        </div>
+    </aside>
+
+    <!-- CONTENU PRINCIPAL -->
+    <main class="flex-1 flex flex-col bg-[#e4e7eb] overflow-y-auto">
+        
+        <!-- En-tête supérieur -->
+        <header class="bg-[#d4d8dd] px-6 py-3 flex justify-between items-center border-b border-gray-400">
+            <span class="text-xs font-semibold text-gray-700">User : <strong class="text-black">admin</strong></span>
+            <h1 class="text-lg font-bold text-gray-800 tracking-wide">Statistiques bénéfice</h1>
+            <button onclick="openImportModal()" class="no-print bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3 py-1.5 rounded shadow">
+                📂 Charger Fichiers Excel
+            </button>
+        </header>
+
+        <!-- Barre d'onglets supérieure (comme sur la photo) -->
+        <div class="px-6 pt-3 bg-[#d4d8dd] border-b border-gray-400 flex justify-center space-x-2 no-print">
+            <button id="tab-comptable" onclick="switchTab('comptable')" class="px-5 py-2 text-xs font-bold rounded-t border border-b-0 border-gray-500 bg-[#1b3a57] text-white hover:bg-[#254d73]">
+                Etat de comptable
+            </button>
+            <button id="tab-mensuel" onclick="switchTab('mensuel')" class="px-5 py-2 text-xs font-bold rounded-t border border-b-0 border-gray-500 bg-white text-gray-900 shadow-inner">
+                Bénéfice Mensuel
+            </button>
+            <button id="tab-periodique" onclick="switchTab('periodique')" class="px-5 py-2 text-xs font-bold rounded-t border border-b-0 border-gray-500 bg-[#1b3a57] text-white hover:bg-[#254d73]">
+                Statistique périodique
+            </button>
+            <button id="tab-journal" onclick="switchTab('journal', 'ALL')" class="px-5 py-2 text-xs font-bold rounded-t border border-b-0 border-gray-500 bg-[#1b3a57] text-white hover:bg-[#254d73]">
+                Journal des opérations
+            </button>
+            <button id="tab-gie" onclick="switchTab('comptable')" class="px-5 py-2 text-xs font-bold rounded-t border border-b-0 border-gray-500 bg-[#1b3a57] text-white hover:bg-[#254d73]">
+                Statistique GIE
+            </button>
+        </div>
+
+        <!-- Barre de Filtres (Année / Mois / Dates / Recherche) -->
+        <form id="filterForm" class="p-4 flex flex-wrap items-center justify-center gap-4 text-xs border-b border-gray-300 bg-[#eaedf1] no-print">
+            <div class="flex items-center space-x-2">
+                <label class="font-semibold text-gray-700">Année :</label>
+                <select id="yearSelect" name="year" class="border border-gray-400 rounded px-3 py-1 bg-white">
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                    <option value="ALL">Toutes</option>
+                </select>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <label class="font-semibold text-gray-700">Mois :</label>
+                <select id="monthSelect" name="month" class="border border-gray-400 rounded px-3 py-1 bg-white w-44">
+                    <option value="ALL">Exercice complet</option>
+                    <option value="2026-07">7 - Juillet 2026</option>
+                    <option value="2026-08">8 - Août 2026</option>
+                    <option value="2026-09">9 - Septembre 2026</option>
+                    <option value="2026-10">10 - Octobre 2026</option>
+                </select>
+            </div>
+
+            <!-- Filtre Périodique (affiché dans Statistique périodique) -->
+            <div id="dateRangeControls" class="hidden flex items-center space-x-2">
+                <label class="font-semibold text-gray-700">Du :</label>
+                <input type="date" id="startDate" name="startDate" class="border border-gray-400 rounded px-2 py-1 bg-white">
+                <label class="font-semibold text-gray-700">Au :</label>
+                <input type="date" id="endDate" name="endDate" class="border border-gray-400 rounded px-2 py-1 bg-white">
+            </div>
+
+            <button type="submit" class="bg-[#1b3a57] hover:bg-[#254d73] text-white font-semibold px-5 py-1.5 rounded shadow flex items-center space-x-2">
+                <span>🔍</span> <span>Recherche</span>
+            </button>
+        </form>
+
+        <!-- ZONE CENTRALE DES VUES -->
+        <div class="p-6 flex-1 flex flex-col justify-between">
+
+            <!-- VUE 1 : BÉNÉFICE MENSUEL (Identique à votre photo : Tableau à gauche + Graphique à droite) -->
+            <div id="view-mensuel" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Tableau Gauche : Mois | Contre valeur achat | Commission -->
+                <div class="lg:col-span-6 bg-[#dce1e7] border border-gray-400 shadow-sm h-[420px] flex flex-col justify-between">
+                    <div class="overflow-y-auto">
+                        <table class="w-full text-xs border-collapse">
+                            <thead>
+                                <tr class="bg-[#c8cfd8] text-gray-800 border-b border-gray-400">
+                                    <th class="p-2.5 border-r border-gray-400 text-left w-16">Mois</th>
+                                    <th class="p-2.5 border-r border-gray-400 text-center">Contre valeur achat</th>
+                                    <th class="p-2.5 text-right w-36">Commission</th>
+                                </tr>
+                            </thead>
+                            <tbody id="magMonthlyTable" class="divide-y divide-gray-300 bg-white">
+                                <tr>
+                                    <td colspan="3" class="p-8 text-center text-gray-500">
+                                        Cliquez sur <strong>"📂 Charger Fichiers Excel"</strong> en haut à droite pour afficher les statistiques.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bg-[#c8cfd8] p-2.5 border-t border-gray-400 flex justify-between text-xs font-bold text-gray-900">
+                        <span>TOTAL EXERCICE</span>
+                        <span id="magTotalAchat">0,00 MAD</span>
+                        <span id="magTotalCommission" class="text-emerald-800">0,00 MAD</span>
+                    </div>
+                </div>
+
+                <!-- Graphique Droite : Histogramme Bleu -->
+                <div class="lg:col-span-6 bg-[#eaedf1] border border-gray-400 p-4 shadow-sm h-[420px] flex flex-col">
+                    <h3 class="text-xs font-bold text-center text-gray-800 mb-2">Statistique Bénéfice Année : 2026</h3>
+                    <div class="flex-1 relative">
+                        <canvas id="benefitChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VUE 2 : ÉTAT COMPTABLE & STATISTIQUE PÉRIODIQUE (Détail par devise avec Stock Initial & Reste) -->
+            <div id="view-comptable" class="hidden space-y-4">
+                <div class="bg-white border border-gray-400 shadow-sm overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-[#1b3a57] text-white uppercase">
+                                <th class="p-3 border-r border-slate-600">Devise</th>
+                                <th class="p-3 border-r border-slate-600 bg-amber-900/50">Stock Initial</th>
+                                <th class="p-3 border-r border-slate-600">Achats</th>
+                                <th class="p-3 border-r border-slate-600">CV DH Achat</th>
+                                <th class="p-3 border-r border-slate-600">Ventes</th>
+                                <th class="p-3 border-r border-slate-600">CV DH Ventes</th>
+                                <th class="p-3 border-r border-slate-600">Cessions</th>
+                                <th class="p-3 border-r border-slate-600">CV DH Cessions</th>
+                                <th class="p-3 border-r border-slate-600">Reste</th>
+                                <th class="p-3 text-right">Commission (MAD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="currencyTable" class="divide-y divide-gray-300"></tbody>
+                        <tfoot id="currencyFooter" class="bg-[#c8cfd8] font-bold text-xs border-t-2 border-gray-400"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <!-- VUE 3 : JOURNAL DES OPÉRATIONS -->
+            <div id="view-journal" class="hidden space-y-3">
+                <div class="bg-white border border-gray-400 shadow-sm overflow-y-auto max-h-[420px]">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="sticky top-0 bg-[#1b3a57] text-white uppercase">
+                            <tr>
+                                <th class="p-2.5">Date & Heure</th>
+                                <th class="p-2.5">N° Bordereau</th>
+                                <th class="p-2.5">Type</th>
+                                <th class="p-2.5">Devise</th>
+                                <th class="p-2.5 text-right">Montant Devise</th>
+                                <th class="p-2.5 text-right">Cours</th>
+                                <th class="p-2.5 text-right">Contrevaleur MAD</th>
+                                <th class="p-2.5 text-right">Marge CUMP (MAD)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="journalTable" class="divide-y divide-gray-200"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pied de page avec bouton Aperçu -->
+            <div class="mt-6 flex justify-center no-print">
+                <button onclick="window.print()" class="bg-[#1b3a57] hover:bg-[#254d73] text-white text-xs font-semibold px-8 py-2.5 rounded shadow flex items-center space-x-2">
+                    <span>📄</span> <span>Aperçu / Imprimer</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODALE D'IMPORTATION DES 3 FICHIERS EXCEL -->
+    <div id="importModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-lg p-6 border-t-4 border-[#1b3a57]">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <h2 class="text-base font-bold text-[#1b3a57]">📂 Importer les exports de la plateforme</h2>
+                <button onclick="closeImportModal()" class="text-gray-500 hover:text-red-600 font-bold text-lg">✕</button>
+            </div>
+            <form id="modalUploadForm" class="space-y-4 text-xs">
+                <div class="p-3 bg-blue-50 border border-blue-200 rounded">
+                    <label class="block font-bold text-blue-900 mb-1">1. Fichier Opérations Achats (.xlsx)</label>
+                    <input type="file" id="fileAchat" accept=".xlsx,.xls" required class="w-full">
+                </div>
+                <div class="p-3 bg-green-50 border border-green-200 rounded">
+                    <label class="block font-bold text-green-900 mb-1">2. Fichier Opérations Ventes (.xlsx)</label>
+                    <input type="file" id="fileVente" accept=".xlsx,.xls" required class="w-full">
+                </div>
+                <div class="p-3 bg-purple-50 border border-purple-200 rounded">
+                    <label class="block font-bold text-purple-900 mb-1">3. Fichier Opérations Cessions (.xlsx)</label>
+                    <input type="file" id="fileCession" accept=".xlsx,.xls" required class="w-full">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeImportModal()" class="px-4 py-2 bg-gray-200 rounded font-semibold">Annuler</button>
+                    <button type="submit" class="px-6 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded font-bold shadow">
+                        🔄 Charger & Calculer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const fmt = (n) => Number(n || 0).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const fmtInt = (n) => Math.round(Number(n || 0)).toLocaleString('fr-FR');
+
+        let chartInstance = null;
+        let lastData = null;
+        let journalFilterType = 'ALL';
+
+        function openImportModal() {
+            document.getElementById('importModal').classList.remove('hidden');
+        }
+        function closeImportModal() {
+            document.getElementById('importModal').classList.add('hidden');
+        }
+
+        // Changement d'onglet
+        function switchTab(tabName, jFilter = 'ALL') {
+            journalFilterType = jFilter;
+            ['mensuel', 'comptable', 'journal'].forEach(v => {
+                document.getElementById('view-' + v).classList.add('hidden');
+            });
+            ['comptable', 'mensuel', 'periodique', 'journal', 'gie'].forEach(t => {
+                const btn = document.getElementById('tab-' + t);
+                btn.className = "px-5 py-2 text-xs font-bold rounded-t border border-b-0 border-gray-500 bg-[#1b3a57] text-white hover:bg-[#254d73]";
+            });
+
+            const activeBtnId = tabName === 'periodique' ? 'tab-periodique' : (tabName === 'journal' ? 'tab-journal' : (tabName === 'comptable' ? 'tab-comptable' : 'tab-mensuel'));
+            document.getElementById(activeBtnId).className = "px-5 py-2 text-xs font-bold rounded-t border border-b-0 border-gray-500 bg-white text-gray-900 shadow-inner";
+
+            // Afficher les sélecteurs Du/Au en mode périodique
+            if (tabName === 'periodique') {
+                document.getElementById('dateRangeControls').classList.remove('hidden');
+                document.getElementById('view-comptable').classList.remove('hidden');
+            } else {
+                document.getElementById('dateRangeControls').classList.add('hidden');
+                document.getElementById('view-' + (tabName === 'periodique' ? 'comptable' : tabName)).classList.remove('hidden');
+            }
+
+            if (lastData && tabName === 'journal') {
+                renderJournal(lastData.journal);
+            }
+        }
+
+        // Fonction centrale d'envoi au serveur
+        async function runCalculation() {
+            const fAchat = document.getElementById('fileAchat').files[0];
+            const fVente = document.getElementById('fileVente').files[0];
+            const fCession = document.getElementById('fileCession').files[0];
+
+            if (!fAchat || !fVente || !fCession) {
+                openImportModal();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('achat', fAchat);
+            formData.append('vente', fVente);
+            formData.append('cession', fCession);
+            formData.append('year', document.getElementById('yearSelect').value);
+            formData.append('month', document.getElementById('monthSelect').value);
+            formData.append('startDate', document.getElementById('startDate').value);
+            formData.append('endDate', document.getElementById('endDate').value);
+
+            const response = await fetch('http://localhost:3000/api/calculate-profit', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.error || "Erreur serveur");
+                return;
+            }
+
+            lastData = data;
+            closeImportModal();
+            renderMonthlyView(data.par_mois);
+            renderComptableView(data.par_devise);
+            renderJournal(data.journal);
+        }
+
+        // Remplir le tableau Bénéfice Mensuel + Histogramme bleu (comme sur la photo)
+        function renderMonthlyView(parMois) {
+            const tbody = document.getElementById('magMonthlyTable');
+            tbody.innerHTML = '';
+
+            let totalAchat = 0, totalComm = 0;
+            const labels = [];
+            const values = [];
+
+            const entries = Object.entries(parMois || {}).sort((a, b) => a[0].localeCompare(b[0]));
+
+            entries.forEach(([ym, stats]) => {
+                totalAchat += stats.cv_achats;
+                totalComm += stats.profit;
+                labels.push(stats.monthNum); // Numéro du mois (7, 8, 9, 10...)
+                values.push(Number(stats.profit.toFixed(2)));
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-blue-50 cursor-pointer" onclick="document.getElementById('monthSelect').value='${ym}'; switchTab('comptable'); runCalculation();">
+                        <td class="p-2 border-r border-gray-300 font-semibold text-gray-800">${stats.monthNum} <span class="text-[10px] text-gray-400 ml-1">(${ym})</span></td>
+                        <td class="p-2 border-r border-gray-300 text-right font-mono text-gray-800">${fmtInt(stats.cv_achats)}</td>
+                        <td class="p-2 text-right font-mono font-bold text-gray-900">${fmt(stats.profit)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('magTotalAchat').textContent = `${fmtInt(totalAchat)} MAD`;
+            document.getElementById('magTotalCommission').textContent = `${fmt(totalComm)} MAD`;
+
+            // Dessiner le graphique Chart.js style MAG Change
+            const ctx = document.getElementById('benefitChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Commission (MAD)',
+                        data: values,
+                        backgroundColor: '#2557d6',
+                        borderColor: '#1a3fa3',
+                        borderWidth: 1,
+                        barPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#9ca3af' }
+                        },
+                        x: {
+                            grid: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Remplir l'état comptable par devise
+        function renderComptableView(parDevise) {
+            const tbody = document.getElementById('currencyTable');
+            const tfoot = document.getElementById('currencyFooter');
+            tbody.innerHTML = '';
+
+            let totCvInit = 0, totCvAchats = 0, totCvVentes = 0, totCvCessions = 0, totProfit = 0;
+
+            for (const [dev, stats] of Object.entries(parDevise || {})) {
+                totCvInit += stats.cv_stock_initial || 0;
+                totCvAchats += stats.cv_achats;
+                totCvVentes += stats.cv_ventes;
+                totCvCessions += stats.cv_cessions;
+                totProfit += stats.profit;
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-100">
+                        <td class="p-2.5 border-r font-bold text-[#1b3a57]">${dev}</td>
+                        <td class="p-2.5 border-r font-semibold text-amber-900 bg-amber-50/70" title="Valeur: ${fmt(stats.cv_stock_initial)} MAD">${fmt(stats.stock_initial)}</td>
+                        <td class="p-2.5 border-r text-blue-900 font-medium">${fmt(stats.achats)}</td>
+                        <td class="p-2.5 border-r text-gray-600">${fmt(stats.cv_achats)}</td>
+                        <td class="p-2.5 border-r text-green-900 font-medium">${fmt(stats.ventes)}</td>
+                        <td class="p-2.5 border-r text-gray-600">${fmt(stats.cv_ventes)}</td>
+                        <td class="p-2.5 border-r text-purple-900 font-medium">${fmt(stats.cessions)}</td>
+                        <td class="p-2.5 border-r text-gray-600">${fmt(stats.cv_cessions)}</td>
+                        <td class="p-2.5 border-r font-semibold text-orange-700">${fmt(stats.reste)}</td>
+                        <td class="p-2.5 text-right font-bold text-emerald-700">${fmt(stats.profit)} MAD</td>
+                    </tr>
+                `;
+            }
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="p-3">TOTAUX MAD</td>
+                    <td class="p-3 text-amber-900">${fmt(totCvInit)}</td>
+                    <td class="p-3">—</td>
+                    <td class="p-3 text-blue-900">${fmt(totCvAchats)}</td>
+                    <td class="p-3">—</td>
+                    <td class="p-3 text-green-900">${fmt(totCvVentes)}</td>
+                    <td class="p-3">—</td>
+                    <td class="p-3 text-purple-900">${fmt(totCvCessions)}</td>
+                    <td class="p-3">—</td>
+                    <td class="p-3 text-right text-emerald-800">${fmt(totProfit)} MAD</td>
+                </tr>
+            `;
+        }
+
+        // Remplir le journal des opérations
+        function renderJournal(journal) {
+            const tbody = document.getElementById('journalTable');
+            tbody.innerHTML = '';
+            const filtered = (journal || []).filter(op => journalFilterType === 'ALL' || op.type === journalFilterType);
+
+            filtered.forEach(op => {
+                const badge = op.type === 'ACHAT' ? 'bg-blue-100 text-blue-800' : (op.type === 'VENTE' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800');
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-2 font-mono">${op.date}</td>
+                        <td class="p-2 font-mono text-gray-600">${op.bordereau}</td>
+                        <td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badge}">${op.type}</span></td>
+                        <td class="p-2 font-bold">${op.devise}</td>
+                        <td class="p-2 text-right font-mono">${fmt(op.quantite)}</td>
+                        <td class="p-2 text-right font-mono">${Number(op.cours).toFixed(4)}</td>
+                        <td class="p-2 text-right font-mono">${fmt(op.cv_mad)}</td>
+                        <td class="p-2 text-right font-mono font-bold text-emerald-700">${op.type === 'ACHAT' ? '-' : fmt(op.profit)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('modalUploadForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            runCalculation();
+        });
+
+        document.getElementById('filterForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            runCalculation();
+        });
+
+        document.getElementById('monthSelect').addEventListener('change', () => {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+        });
+    </script>
+</body>
+</html>
